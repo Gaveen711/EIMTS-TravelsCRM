@@ -1,0 +1,3 @@
+-- No default passwords or auth identities are seeded into SQL.
+-- Run npm run seed:admin (environment-configured bootstrap) and npm run seed:demo
+-- explicitly after applying the migrations. Demo data uses reserved example.com contacts.
