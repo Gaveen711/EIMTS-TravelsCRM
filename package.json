@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "seed:admin": "tsx --env-file=.env.local scripts/seed-admin.ts",
-    "seed:demo": "tsx --env-file=.env.local scripts/seed-demo.ts"
+    "seed:demo": "tsx --env-file=.env.local scripts/seed-demo.ts",
+    "test:e2e:crm": "playwright test --config=playwright.crm.config.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "5.9.1",

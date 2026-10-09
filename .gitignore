@@ -15,3 +15,4 @@ next-env.d.ts
 .DS_Store
 npm-debug.log*
 /node_modules.recovery-backup/
+/.next-crm-tests/
