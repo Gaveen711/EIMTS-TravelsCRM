@@ -59,7 +59,7 @@ test("supplier linking, exact service prices and archiving persist",async({page}
  await page.getByLabel("Cost price *",{exact:true}).fill("95.35");
  await page.getByLabel("Selling price *",{exact:true}).fill("125.99");
  await page.getByLabel("Tax percentage *",{exact:true}).fill("10.5");
- await page.getByLabel("Supplier",{exact:true}).selectOption({label:supplier});
+ await page.getByRole("combobox",{name:"Supplier",exact:true}).selectOption({label:supplier});
  await page.getByRole("button",{name:"Save service",exact:true}).click();
  await expect(page.getByRole("heading",{name:service,exact:true})).toBeVisible();
  const card=page.locator("article").filter({has:page.getByRole("heading",{name:service,exact:true})});
@@ -73,7 +73,7 @@ test("supplier linking, exact service prices and archiving persist",async({page}
  const supplierCard=page.locator("article").filter({has:page.getByRole("heading",{name:supplier,exact:true})});
  await supplierCard.getByRole("button",{name:"Delete supplier",exact:true}).click();
  await supplierCard.getByRole("button",{name:"Confirm delete",exact:true}).click();
- await expect(page.getByRole("alert")).toContainText("linked to services or bookings");
+ await expect(page.getByText("This supplier is linked to services or bookings. Keep it for their history.",{exact:true})).toBeVisible();
  await expect(page.getByRole("heading",{name:supplier,exact:true})).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });

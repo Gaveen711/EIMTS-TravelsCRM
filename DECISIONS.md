@@ -18,3 +18,13 @@
 ## File recovery — 2026-10-09
 
 The original EIMTS_Travels_CRM path no longer exists. The surviving project is EIMTS_TravelsCRM. Root configuration/documentation, the legacy copy and lockfile were missing; its Git database contained no recoverable Phase 1 commit. Reconstruct missing configuration using the known Phase 1 setup and installed package versions; preserve all surviving application, SQL and test source files. Regenerate the lockfile using npm and recopy the original Desktop HTML. This restores the runnable project, not the lost Git history. No real credentials are reconstructed or invented.
+
+## Phase 2 — 2026-10-09
+
+1. Customers support individuals and companies, shared role-authorized records, pipeline stages and an activity timeline. Preserve customer history rather than expose destructive deletion.
+2. Customer saves, pipeline changes and CSV imports use transactional database functions so their activity records cannot diverge. Imports append records; they never silently merge contacts. Limit imports to 200 rows and 256 KB.
+3. CSV exports fetch pages using actual returned row counts, avoiding Supabase's response cap. Exports are limited to 5,000 records with an explicit error beyond that limit. Neutralize spreadsheet formulas in exported values.
+4. Service prices are parsed from decimal strings into integer minor units. Support zero-, two- and three-decimal currencies; tax rates remain exact database numeric values. Currency is explicit per service.
+5. Archive services to retain document history. Database foreign keys prevent deleting linked suppliers, and the UI explains this restriction.
+6. Add a test-only Supabase-shaped HTTP fixture backed by actual migrations and PostgreSQL RLS in PGlite. It exercises authenticated desktop/mobile UI without credentials. Production code never imports the fixture or bypasses authentication. Hosted Supabase Auth, email, Storage and migration application still require separate verification.
+7. Customer search uses indexed PostgreSQL full-text search. Lists are paginated; supplier and service pages include search and relevant filters. Accountants have read-only catalog access and no customer access.

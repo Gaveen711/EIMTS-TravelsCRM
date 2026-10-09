@@ -23,7 +23,7 @@ export async function deleteSupplier(id:string) {
  if(!z.uuid().safeParse(id).success)return {error:"Invalid record identifier."};
  try {
   const db=await createClient(); const {data,error}=await db.from("suppliers").delete().eq("id",id).select("id").single();
-  if(error||!data)return {error:error?.code==="23503"?"This supplier is linked to services or bookings. Keep it for their history.":"Unable to delete supplier."};
+  if(error||!data)return {error:["23503","23001"].includes(error?.code??"")?"This supplier is linked to services or bookings. Keep it for their history.":"Unable to delete supplier."};
  }catch{return {error:"Unable to connect. Please try again."};}
  revalidatePath("/suppliers");return {success:true};
 }

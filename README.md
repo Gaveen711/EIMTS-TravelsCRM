@@ -1,6 +1,6 @@
 # Emerald Isle Travels CRM
 
-Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui and Bootstrap Icons with Supabase PostgreSQL/Auth/Storage. Phase 1 provides authentication and the database foundation. The full sales cycle is planned in subsequent phases.
+Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui and Bootstrap Icons with Supabase PostgreSQL/Auth/Storage. Phases 1–2 provide authentication, the database foundation, customer CRM, suppliers and the services catalog. Itineraries and the remaining sales cycle follow in subsequent phases.
 
 ## Run locally
 
@@ -59,7 +59,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-The Phase 1 suite has 35 tests: 18 auth/validation tests and 17 SQL integration tests. PGlite executes the actual PostgreSQL migration with stubs for Supabase-managed Auth/Storage; tests cover roles, inactive users, escalation denial, invoice locks, counters, payments, credits, audit and storage policies. Ten desktop/phone browser tests cover login, redirects, form validation and recovery rejection.
+The suite has 64 tests covering authentication, validation, CSV transfer, exact prices, export pagination and SQL integration. PGlite executes the actual PostgreSQL migration with stubs for Supabase-managed Auth/Storage; tests cover roles, inactive users, escalation denial, invoice locks, counters, payments, credits, audit and storage policies. Ten desktop/phone browser tests cover login, redirects, form validation and recovery rejection. Eight additional authenticated desktop/phone tests cover customers, pipeline/activity persistence, CSV import/export, supplier linking, service archiving and accountant restrictions. The CRM browser suite launches an isolated test-only Auth/API fixture backed by actual SQL migrations and RLS; it needs no API keys.
 
 Live authentication, session refresh, recovery email, hosted RLS and Storage require Supabase configuration. The full sales-cycle E2E test arrives after the business modules. Passing offline tests does not establish deployed behavior.
 
@@ -87,3 +87,9 @@ Development-tool advisories through braces were documented in Phase 1; do not fo
 10. Hardening and final deployment documentation.
 
 See [DECISIONS.md](DECISIONS.md), [legacy analysis](docs/legacy-analysis.md) and [Phase 1 report](docs/phase-1.md).
+
+## Customer CRM and catalog
+
+Apply both migrations before using Phase 2 with Supabase. Customers support contact details, optional passports, tags, notes, pipeline filters and activity history. CSV templates are available on the Customers page; imports append up to 200 validated rows per batch. Exports support up to 5,000 records. Suppliers have contact details and payment terms; reusable services store supplier links, exact cost/selling prices, currency, tax and archive status. Linked suppliers cannot be deleted.
+
+See [Phase 2 report](docs/phase-2.md).

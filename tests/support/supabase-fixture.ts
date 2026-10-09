@@ -89,6 +89,7 @@ const server = createServer((req,res)=>{
   const compare = (column:string, operation:string, value:string) => {
     if (!valid.has(column)) throw new Error("Unknown fixture column");
     if (operation==="eq") return column+" = "+binds(value);
+    if (operation==="lte") return column+" <= "+binds(value);
     if (operation==="ilike") return column+" ilike "+binds(value.replaceAll("*","%"));
     if (operation==="is" && value==="null") return column+" is null";
     if (operation==="wfts(simple)") return column+" @@ websearch_to_tsquery('simple',"+binds(value)+")";
@@ -136,7 +137,7 @@ const server = createServer((req,res)=>{
  };
  const current = queue.then(run);
  queue = current.catch(()=>{});
- void current.catch((error:unknown)=>{if(!res.headersSent){res.writeHead(400,{"Content-Type":"application/json"});res.end(JSON.stringify({message:error instanceof Error?error.message:"Fixture error",code: (error as {code?:string}).code ?? "fixture_error"}));}});
+ void current.catch((error:unknown)=>{console.error("Fixture request failed", req.method, req.url, (error as {code?:string}).code, error instanceof Error ? error.message : error);if(!res.headersSent){res.writeHead(400,{"Content-Type":"application/json"});res.end(JSON.stringify({message:error instanceof Error?error.message:"Fixture error",code: (error as {code?:string}).code ?? "fixture_error"}));}});
 });
 server.listen(3101,"127.0.0.1",()=>console.log("Test-only Supabase fixture ready on 3101"));
 const close=()=>server.close(()=>{void db.close().then(()=>process.exit(0));});
