@@ -12,7 +12,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open http://localhost:3000/login. You can build and test without keys. Missing Supabase configuration renders setup feedback and denies protected routes; there is no demo authentication bypass. Restart development after adding environment variables. Rebuild production after changing public variables.
+Open http://localhost:3000/login. You can build and test without keys. With temporary local login disabled, missing Supabase configuration renders setup feedback and denies protected routes. See Temporary local login below for the explicitly enabled development preview. Restart development after adding environment variables. Rebuild production after changing public variables.
 
 ## Supabase
 
@@ -59,7 +59,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-The suite has 64 tests covering authentication, validation, CSV transfer, exact prices, export pagination and SQL integration. PGlite executes the actual PostgreSQL migration with stubs for Supabase-managed Auth/Storage; tests cover roles, inactive users, escalation denial, invoice locks, counters, payments, credits, audit and storage policies. Ten desktop/phone browser tests cover login, redirects, form validation and recovery rejection. Eight additional authenticated desktop/phone tests cover customers, pipeline/activity persistence, CSV import/export, supplier linking, service archiving and accountant restrictions. The CRM browser suite launches an isolated test-only Auth/API fixture backed by actual SQL migrations and RLS; it needs no API keys.
+The suite has 66 tests covering authentication, validation, CSV transfer, exact prices, export pagination and SQL integration. PGlite executes the actual PostgreSQL migration with stubs for Supabase-managed Auth/Storage; tests cover roles, inactive users, escalation denial, invoice locks, counters, payments, credits, audit and storage policies. Ten desktop/phone browser tests cover login, redirects, form validation and recovery rejection. Eight additional authenticated desktop/phone tests cover customers, pipeline/activity persistence, CSV import/export, supplier linking, service archiving and accountant restrictions. The CRM browser suite launches an isolated test-only Auth/API fixture backed by actual SQL migrations and RLS; it needs no API keys.
 
 Live authentication, session refresh, recovery email, hosted RLS and Storage require Supabase configuration. The full sales-cycle E2E test arrives after the business modules. Passing offline tests does not establish deployed behavior.
 
@@ -93,3 +93,9 @@ See [DECISIONS.md](DECISIONS.md), [legacy analysis](docs/legacy-analysis.md) and
 Apply both migrations before using Phase 2 with Supabase. Customers support contact details, optional passports, tags, notes, pipeline filters and activity history. CSV templates are available on the Customers page; imports append up to 200 validated rows per batch. Exports support up to 5,000 records. Suppliers have contact details and payment terms; reusable services store supplier links, exact cost/selling prices, currency, tax and archive status. Linked suppliers cannot be deleted.
 
 See [Phase 2 report](docs/phase-2.md).
+
+## Temporary local login
+
+For local preview, set CRM_LOCAL_LOGIN=true and CRM_LOCAL_SESSION_SECRET to a random private value in .env.local, then restart npm run dev. Sign in with username admin and password 2001. This enables a signed, eight-hour local Admin session and dashboard preview; business database features still require Supabase. This mode is disabled in production regardless of the flag. To switch to Supabase email/password authentication, set CRM_LOCAL_LOGIN=false and restart. Never reuse these temporary credentials for hosted accounts.
+
+Verify with npx playwright test --config=playwright.local.config.ts.

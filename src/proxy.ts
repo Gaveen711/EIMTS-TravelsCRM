@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseConfig } from "@/lib/supabase/config";
+import { localLoginEnabled, verifyLocalSession, localCookie } from '@/lib/auth/local';
 const publicPaths = new Set(["/login", "/forgot-password", "/reset-password", "/auth/callback"]);
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -15,6 +16,10 @@ export async function proxy(request: NextRequest) {
     redirect.headers.set("Cache-Control", "private, no-store");
     return redirect;
   };
+  if (localLoginEnabled()) {
+    response.headers.set("Cache-Control", "private, no-store");
+    return isPublic || verifyLocalSession(request.cookies.get(localCookie)?.value) ? response : toLogin();
+  }
   if (!config) return isPublic ? response : toLogin("setup");
   const supabase = createServerClient(config.url, config.key, { cookies: { getAll: () => request.cookies.getAll(), setAll(values) { values.forEach(({ name, value }) => request.cookies.set(name, value)); response = NextResponse.next({ request }); values.forEach(({ name, value, options }) => response.cookies.set(name, value, options)); response.headers.set("Cache-Control", "private, no-store"); } } });
   const { data, error } = await supabase.auth.getClaims();

@@ -4,10 +4,17 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseConfig } from "@/lib/supabase/config";
 import { loginSchema, forgotPasswordSchema, resetPasswordSchema, safeNextPath } from "./validation";
+import { localLoginEnabled, localCookie, createLocalSession } from './local';
 import { isRole } from "./permissions";
 export type AuthResult = { error?: string; success?: string };
 const setupError = { error: "Your workspace needs Supabase configuration. Follow the setup steps in README.md." };
 export async function loginAction(input: unknown, next: string): Promise<AuthResult> {
+  if (localLoginEnabled()) {
+    const parsed = typeof input === "object" && input !== null ? input as Record<string, unknown> : {};
+    if (parsed.email !== "admin" || parsed.password !== "2001") return { error: "Check your username and password." };
+    (await cookies()).set(localCookie, createLocalSession(), { httpOnly: true, sameSite: "lax", path: "/", maxAge: 8 * 60 * 60 });
+    redirect("/dashboard");
+  }
   const result = loginSchema.safeParse(input);
   if (!result.success) return { error: "Enter a valid email address and password." };
   if (!supabaseConfig()) return setupError;
@@ -50,7 +57,7 @@ export async function resetPasswordAction(input: unknown): Promise<AuthResult> {
   redirect("/login?reason=password-updated");
 }
 export async function logoutAction() {
-  if (supabaseConfig()) { const supabase = await createClient(); const { error } = await supabase.auth.signOut(); if (error) throw new Error("Sign out failed. Please try again."); }
+  (await cookies()).delete(localCookie); if (!localLoginEnabled() && supabaseConfig()) { const supabase = await createClient(); const { error } = await supabase.auth.signOut(); if (error) throw new Error("Sign out failed. Please try again."); }
   (await cookies()).delete("crm-recovery");
   redirect("/login");
 }

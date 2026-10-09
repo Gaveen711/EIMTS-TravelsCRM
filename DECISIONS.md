@@ -28,3 +28,7 @@ The original EIMTS_Travels_CRM path no longer exists. The surviving project is E
 5. Archive services to retain document history. Database foreign keys prevent deleting linked suppliers, and the UI explains this restriction.
 6. Add a test-only Supabase-shaped HTTP fixture backed by actual migrations and PostgreSQL RLS in PGlite. It exercises authenticated desktop/mobile UI without credentials. Production code never imports the fixture or bypasses authentication. Hosted Supabase Auth, email, Storage and migration application still require separate verification.
 7. Customer search uses indexed PostgreSQL full-text search. Lists are paginated; supplier and service pages include search and relevant filters. Accountants have read-only catalog access and no customer access.
+
+## Temporary login — 2026-10-09
+
+User requested admin / 2001 before configuring Supabase. Explicit opt-in local development authentication replaces the previous no-demo-login decision for local preview only. Use an HTTP-only signed session with eight-hour expiry, verify it in proxy and server guards, and clear it on logout. Production always disables this mode. Database-backed modules still require Supabase; this change does not simulate saved business data. The random signing secret is in ignored .env.local only.
