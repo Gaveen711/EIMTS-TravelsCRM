@@ -1,3 +1,5 @@
+> Historical phase record. Authentication UI was subsequently deferred at the user's request; see README and DECISIONS for the current working mode.
+
 # Phase 1
 
 Delivered authentication/recovery, profile roles, protected responsive workspace, normalized Supabase schema/RLS, private storage, numbering, audit, invoice locks, ledger payments and credit foundations. Secure seeds and the unmodified legacy artifact support subsequent phases.

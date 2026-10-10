@@ -1,5 +1,73 @@
-import { describe,it,expect } from "vitest";
-import { importCsv,parseCsv,csvCell } from "../src/lib/customers/csv";
-import { customerSchema,emptyCustomer,customerRecord } from "../src/lib/customers/schema";
-describe("customer validation",()=>{it("requires valid contact fields and bounded tags",()=>{expect(customerSchema.safeParse({...emptyCustomer,name:" "}).success).toBe(false);expect(customerSchema.safeParse({...emptyCustomer,name:"Ana",email:"bad"}).success).toBe(false);expect(customerSchema.safeParse({...emptyCustomer,name:"Ana",tags:"x".repeat(41)}).success).toBe(false);});it("normalizes empty optional fields and deduplicates tags",()=>{expect(customerRecord({...emptyCustomer,name:"Ana",tags:"VIP, VIP, Repeat"})).toMatchObject({email:null,tags:["VIP","Repeat"]});});});
-describe("customer CSV",()=>{it("parses quoted commas multiline and escaped quotes",()=>{expect(parseCsv('name,notes\r\n"Ana, M","Line 1\nLine ""2"""')).toEqual([["name","notes"],["Ana, M",'Line 1\nLine "2"']]);});it("imports validated rows with defaults",()=>{expect(importCsv('name,email\nAna,ana@example.com')).toEqual([expect.objectContaining({name:"Ana",email:"ana@example.com",lead_status:"new",tags:[]})]);});it("rejects unsupported duplicate headers malformed quotes and invalid rows",()=>{for(const csv of ['name,name\nAna,B','name,unknown\nAna,B','name\n"Ana','name,email\nAna,bad','name\n"Ana"bad','name,phone\nAna'])expect(()=>importCsv(csv)).toThrow();});it("caps row count and byte size",()=>{expect(()=>importCsv('name\n'+Array(201).fill("Ana").join("\n"))).toThrow();expect(()=>parseCsv("a".repeat(262145))).toThrow();});it("prevents formula injection and escapes quotes",()=>{expect(csvCell(' =HYPERLINK("bad")')).toBe('"\' =HYPERLINK(""bad"")"');expect(csvCell("@cmd")).toBe('"\'@cmd"');});});
+import { describe, it, expect } from "vitest";
+import { importCsv, parseCsv, csvCell } from "../src/lib/customers/csv";
+import {
+  customerSchema,
+  emptyCustomer,
+  customerRecord,
+} from "../src/lib/customers/schema";
+describe("customer validation", () => {
+  it("requires valid contact fields and bounded tags", () => {
+    expect(
+      customerSchema.safeParse({ ...emptyCustomer, name: " " }).success,
+    ).toBe(false);
+    expect(
+      customerSchema.safeParse({ ...emptyCustomer, name: "Ana", email: "bad" })
+        .success,
+    ).toBe(false);
+    expect(
+      customerSchema.safeParse({
+        ...emptyCustomer,
+        name: "Ana",
+        tags: "x".repeat(41),
+      }).success,
+    ).toBe(false);
+  });
+  it("normalizes empty optional fields and deduplicates tags", () => {
+    expect(
+      customerRecord({
+        ...emptyCustomer,
+        name: "Ana",
+        tags: "VIP, VIP, Repeat",
+      }),
+    ).toMatchObject({ email: null, tags: ["VIP", "Repeat"] });
+  });
+});
+describe("customer CSV", () => {
+  it("parses quoted commas multiline and escaped quotes", () => {
+    expect(parseCsv('name,notes\r\n"Ana, M","Line 1\nLine ""2"""')).toEqual([
+      ["name", "notes"],
+      ["Ana, M", 'Line 1\nLine "2"'],
+    ]);
+  });
+  it("imports validated rows with defaults", () => {
+    expect(importCsv("name,email\nAna,ana@example.com")).toEqual([
+      expect.objectContaining({
+        name: "Ana",
+        email: "ana@example.com",
+        lead_status: "new",
+        tags: [],
+      }),
+    ]);
+  });
+  it("rejects unsupported duplicate headers malformed quotes and invalid rows", () => {
+    for (const csv of [
+      "name,name\nAna,B",
+      "name,unknown\nAna,B",
+      'name\n"Ana',
+      "name,email\nAna,bad",
+      'name\n"Ana"bad',
+      "name,phone\nAna",
+    ])
+      expect(() => importCsv(csv)).toThrow();
+  });
+  it("caps row count and byte size", () => {
+    expect(() =>
+      importCsv("name\n" + Array(201).fill("Ana").join("\n")),
+    ).toThrow();
+    expect(() => parseCsv("a".repeat(262145))).toThrow();
+  });
+  it("prevents formula injection and escapes quotes", () => {
+    expect(csvCell(' =HYPERLINK("bad")')).toBe('"\' =HYPERLINK(""bad"")"');
+    expect(csvCell("@cmd")).toBe('"\'@cmd"');
+  });
+});

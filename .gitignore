@@ -16,3 +16,6 @@ next-env.d.ts
 npm-debug.log*
 /node_modules.recovery-backup/
 /.next-crm-tests/
+
+/.crm-data/
+/.crm-test-data/

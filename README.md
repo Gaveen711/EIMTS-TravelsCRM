@@ -1,22 +1,35 @@
 # Emerald Isle Travels CRM
 
-Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui and Bootstrap Icons with Supabase PostgreSQL/Auth/Storage. Phases 1–2 provide authentication, the database foundation, customer CRM, suppliers and the services catalog. Itineraries and the remaining sales cycle follow in subsequent phases.
+A connected consultant workspace for Customer → Itinerary → Quotation → Booking → Invoice → Payment. Next.js App Router, TypeScript, Tailwind, shadcn/ui and Bootstrap Icons; Supabase PostgreSQL/Auth/Storage; React PDF, Zod, React Hook Form and Recharts.
 
-## Run locally
+## Local development without login
 
-Use Node.js 24 LTS and npm. On PowerShell use npm.cmd if execution policy blocks npm.
+Use Node.js 24 LTS. On Windows PowerShell use npm.cmd.
 
 ```sh
 npm ci
-cp .env.example .env.local
 npm run dev
 ```
 
-Open http://localhost:3000/login. You can build and test without keys. With temporary local login disabled, missing Supabase configuration renders setup feedback and denies protected routes. See Temporary local login below for the explicitly enabled development preview. Restart development after adding environment variables. Rebuild production after changing public variables.
+Open http://localhost:3000. Development opens directly into the consultant desk. No API keys or password are needed: the local PostgreSQL engine persists data in ignored .crm-data and applies SQL migrations on startup. It supplies an example customer, supplier and service. Restart the server after adding migrations.
 
-## Supabase
+Local records are separate from Supabase. This is a deliberate development mode while login is deferred. Production never enables it and retains identity/RLS checks. Do not deploy this unfinished checkout as an open business database. Configuration and final access work remain necessary before hosted business use.
 
-Create a free Supabase project and set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY and the server-only SUPABASE_SERVICE_ROLE_KEY in .env.local. Never expose the service-role key through NEXT_PUBLIC_ variables. It is used only by administrative seed scripts.
+## Modules
+
+Customers include individuals/companies, contact/passport details, tags, pipeline stages, activity history, search and CSV import/export. Suppliers and services hold contacts, payment terms, currency, exact cost/selling prices and tax rates.
+
+Itineraries provide native trip/day editing and previews, reorder, route maps, themes/photos, customer-linked database drafts, duplication, PDF and expiring/revocable sharing. Their pricing and dates flow into quotations.
+
+Quotations support catalog/custom lines, fractional quantities, tax/discount, dates, validity, currency/exchange rate and branded PDF. Accepted quotations convert once into bookings, copying their items. Bookings track travelers, confirmations, costs, selling prices and profit excluding tax. Generate deposit/partial/balance invoices without retyping.
+
+Issued invoices lock in the database. Payments update balances atomically; partial payments and credit notes preserve the audit history. Reports show issued revenue after credits, outstanding balances, overdue documents, departures, conversion and destinations separately by currency. Company settings control branding, bank/tax details, numbering and terms/email templates. Auth/user administration is the final stage.
+
+## Supabase setup
+
+Create a free Supabase project. Copy .env.example to .env.local and enter project URL, publishable key and a server-only service-role key for explicit administration scripts. Never expose a service-role key through NEXT_PUBLIC_ variables.
+
+SQL source lives in supabase/migrations. The supplied CRM project already has the foundation and catalog SQL applied manually. Workflow migrations are applied through the Supabase plugin; see docs/backend-verification.md for the recorded verification. Existing baseline history and workflow versions have been reconciled with local filenames; inspect migration status before future db push. Do not rerun applied files in SQL Editor.
 
 For a disposable local Supabase database, install Docker and the Supabase CLI:
 
@@ -25,28 +38,22 @@ npx supabase start
 npx supabase db reset
 ```
 
-db reset deletes local data and reapplies migrations; use only for a disposable local database. For hosted setup, link the intended project and run npx supabase db push after inspecting the target.
+Reset deletes local data; use it only with a disposable local Supabase target. It does not reset the separate PGlite .crm-data directory.
 
-Disable public signup in hosted Supabase Auth. Local config already disables signup. Set Site URL to http://localhost:3000 and allow http://localhost:3000/auth/callback; use the corresponding deployment URLs later. Password recovery uses Supabase Auth email and PKCE. Review its delivery configuration separately from optional CRM email.
-
-After applying migrations:
+Initial Admin provisioning is available for the final Auth stage:
 
 ```sh
 npm run seed:admin
 npm run seed:demo
 ```
 
-Set SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD (at least 12 characters) and SEED_ADMIN_NAME in .env.local. These are your demo login credentials; no shared password is shipped. Bootstrap preserves an existing active Admin and refuses to promote an existing non-admin. Optional demo seeds use stable IDs and preserve edits on repeat runs. Migration creates company defaults; SQL seed creates no Auth identities.
+Set SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD (at least 12 characters) and SEED_ADMIN_NAME first. Scripts load .env.local; no shared hosted credentials are shipped. Bootstrap refuses silent promotion of an existing non-admin user. Demo seeding uses stable IDs and preserves existing edits.
 
-## Roles and architecture
+## Email and files
 
-- Admin: all business records, settings and users.
-- Agent: customers, suppliers/services, itineraries, quotations and bookings.
-- Accountant: invoices/payments/reports, read-only bookings/items and suppliers/services. Invoice billing snapshots provide customer context without passport access.
+Private Supabase buckets store company logos and itinerary photos. Local development stores uploads below .crm-data. Server routes produce branded PDFs on demand without a paid PDF API.
 
-Server actions validate using Zod; forms use React Hook Form. Server guards verify Supabase identity and active profile roles. RLS protects direct database calls. One agency shares records according to roles; this is not a multi-tenant SaaS. Money uses integer minor units and exact numeric exchange rates.
-
-src/app contains routes; src/components contains reusable UI; src/lib contains authorization and Supabase helpers. supabase/migrations contains the schema/RLS. scripts contains explicit environment-based seeds. legacy-itinerary contains the unchanged reference, never publicly served.
+Optional customer email uses RESEND_API_KEY and EMAIL_FROM. An unconfigured or failed sender reports a clear fallback to downloading the PDF. Email templates support customer, document, total and due_date placeholders. No email is sent by build or seed scripts.
 
 ## Verification
 
@@ -56,46 +63,24 @@ npm run typecheck
 npm run lint
 npm run build
 npx playwright install chromium
+npm run test:e2e:crm
 npm run test:e2e
 ```
 
-The suite has 66 tests covering authentication, validation, CSV transfer, exact prices, export pagination and SQL integration. PGlite executes the actual PostgreSQL migration with stubs for Supabase-managed Auth/Storage; tests cover roles, inactive users, escalation denial, invoice locks, counters, payments, credits, audit and storage policies. Ten desktop/phone browser tests cover login, redirects, form validation and recovery rejection. Eight additional authenticated desktop/phone tests cover customers, pipeline/activity persistence, CSV import/export, supplier linking, service archiving and accountant restrictions. The CRM browser suite launches an isolated test-only Auth/API fixture backed by actual SQL migrations and RLS; it needs no API keys.
+Vitest executes real PostgreSQL migrations, RLS and triggers in PGlite. Browser suites exercise persisted customers/catalog, native itinerary sharing/photos/PDF and the connected sales cycle on desktop and phone. Browser tests use isolated ignored local databases. Run browser suites sequentially because their Next.js build directory is shared.
 
-Live authentication, session refresh, recovery email, hosted RLS and Storage require Supabase configuration. The full sales-cycle E2E test arrives after the business modules. Passing offline tests does not establish deployed behavior.
+Current checkpoint: 105 unit/database tests and 14 desktop/mobile browser cases pass. Typecheck, lint and production build pass; details are in [verification evidence](docs/verification.md).
 
-## Configuration and deployment
+Passing local tests does not prove hosted Auth, email delivery, Storage upload configuration or Vercel deployment. These require separate final verification. Do not commit .env, .env.local, .crm-data or private exports.
 
-.env.example describes public Supabase/app settings, server-only seed credentials and optional Resend/SMTP variables reserved for Phase 8. All selected libraries are free to use. Optional customer email will fail gracefully when unconfigured. No Vercel API key belongs in the application.
+## Architecture and deployment
 
-Import into Vercel as Next.js and configure environment variables in its dashboard. Apply migrations separately, then update Supabase redirects. Never reset databases or seed users during deployment builds.
+src/app contains routes; src/components small UI; src/lib validation, database and business logic. SQL migrations own transactional document invariants. Server guards and RLS enforce roles; invoicing uses safe billing snapshots so accounting cannot read customer passports.
 
-[Vercel Hobby](https://vercel.com/docs/plans/hobby) restricts hosting to non-commercial personal use. This commercial agency CRM cannot be promised compliant free Hobby production hosting; eligible personal evaluation is separate. No paid services are purchased by this app.
+Lists and detail views render on the server. PDF renderer stays server-only. Charts load separately, icons use a generated Bootstrap sprite, and financial dashboards aggregate in one database call. Run node scripts/build-icons.mjs after adding icons.
 
-Development-tool advisories through braces were documented in Phase 1; do not force incompatible Next/shadcn downgrades. Check npm audit --omit=dev separately for production dependencies.
+Import as a standard Next.js project on Vercel when the final access stage is ready. Configure environment variables in the dashboard, apply migrations separately and update Supabase redirects. Never reset databases or provision users during build.
 
-## Phases
+Vercel Hobby restricts hosting to non-commercial personal use: https://vercel.com/docs/plans/hobby. Personal evaluation and commercial agency hosting have different eligibility; the app purchases no paid services.
 
-1. Auth, roles, protected layout and database foundation.
-2. Customers, suppliers and catalog.
-3. Native itinerary editor and PDF.
-4. Quotations and itinerary conversion.
-5. Bookings, travelers and confirmations.
-6. Invoices, payments and credit notes.
-7. Dashboard and reports.
-8. Settings, email templates and users.
-9. Full-cycle tests.
-10. Hardening and final deployment documentation.
-
-See [DECISIONS.md](DECISIONS.md), [legacy analysis](docs/legacy-analysis.md) and [Phase 1 report](docs/phase-1.md).
-
-## Customer CRM and catalog
-
-Apply both migrations before using Phase 2 with Supabase. Customers support contact details, optional passports, tags, notes, pipeline filters and activity history. CSV templates are available on the Customers page; imports append up to 200 validated rows per batch. Exports support up to 5,000 records. Suppliers have contact details and payment terms; reusable services store supplier links, exact cost/selling prices, currency, tax and archive status. Linked suppliers cannot be deleted.
-
-See [Phase 2 report](docs/phase-2.md).
-
-## Temporary local login
-
-For local preview, set CRM_LOCAL_LOGIN=true and CRM_LOCAL_SESSION_SECRET to a random private value in .env.local, then restart npm run dev. Sign in with username admin and password 2001. This enables a signed, eight-hour local Admin session and dashboard preview; business database features still require Supabase. This mode is disabled in production regardless of the flag. To switch to Supabase email/password authentication, set CRM_LOCAL_LOGIN=false and restart. Never reuse these temporary credentials for hosted accounts.
-
-Verify with npx playwright test --config=playwright.local.config.ts.
+See [deployment instructions](docs/deployment.md), DECISIONS.md, docs/legacy-analysis.md and the phase reports for scope, verification and remaining release work.

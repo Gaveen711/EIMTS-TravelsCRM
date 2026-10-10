@@ -1,2 +1,0 @@
-import { defineConfig } from "@playwright/test";
-export default defineConfig({ testDir: "./tests/e2e-local", workers: 1, use: { baseURL: "http://127.0.0.1:3200" }, webServer: { command: "npm run dev -- --hostname 127.0.0.1 --port 3200", url: "http://127.0.0.1:3200/login", reuseExistingServer: false, env: { CRM_LOCAL_LOGIN: "true", CRM_LOCAL_SESSION_SECRET: "isolated-browser-test-secret", CRM_TEST_DIST_DIR: ".next-crm-tests" } } });

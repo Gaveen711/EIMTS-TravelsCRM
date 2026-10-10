@@ -1,3 +1,5 @@
+> Historical phase record. Current verification uses the local PostgreSQL workspace and skips login; see docs/verification.md for updated results.
+
 # Phase 2: customers, suppliers and services
 
 Built customer create/edit/detail views, indexed search, filters, pagination, pipeline stages, activity notes and validated CSV import/export. Added supplier and services catalog forms, search/filter lists, exact currency prices, tax rules, supplier links and service archiving. Role guards and database RLS enforce access; database functions make customer activity changes atomic.
